@@ -1,0 +1,240 @@
+/* --- General Setup & Body Styling --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f0f2f5; /* A light, professional background color */
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* --- Main Application Container --- */
+.app-container {
+    background-color: #ffffff;
+    padding: 2rem 3rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 900px;
+}
+
+/* --- Header "FitStyle" --- */
+header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+header h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    letter-spacing: 1px;
+}
+
+header p {
+    font-size: 1.1rem;
+    color: #666;
+    margin-top: 0.5rem;
+}
+
+/* --- Form Layout (Using CSS Grid) --- */
+.form-grid {
+    display: grid;
+    /* Create 2 equal columns on larger screens */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem; /* Space between the dropdowns */
+    margin-bottom: 2.5rem;
+}
+
+/* --- Dropdown Styles --- */
+.form-group label {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 0.5rem;
+}
+
+.select-wrapper {
+    position: relative;
+}
+
+/* Custom arrow for the dropdown */
+.select-wrapper::after {
+    content: '▼';
+    font-size: 1rem;
+    color: #888;
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none; /* Allows clicks to go through to the select box */
+}
+
+select {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    
+    /* Removes the default browser arrow */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* Style for when a dropdown is focused (clicked on) */
+select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* --- Button Styles --- */
+.button-container {
+    display: flex;
+    justify-content: flex-end; /* Aligns buttons to the right */
+    gap: 1rem; /* Space between the buttons */
+    margin-top: 1rem;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+/* Primary Button: Submit */
+.btn-submit {
+    background-color: #007bff; /* Professional Blue */
+    color: #ffffff;
+}
+
+.btn-submit:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+    transform: translateY(-2px);
+}
+
+/* Secondary Button: Reset */
+.btn-reset {
+    background-color: #6c757d; /* Professional Gray */
+    color: #ffffff;
+}
+
+.btn-reset:hover {
+    background-color: #5a6268; /* Darker gray on hover */
+    transform: translateY(-2px);
+}
+
+
+/* --- NEW STYLES FOR THE JAVASCRIPT OUTPUT --- */
+
+/* Utility class to hide elements */
+.hidden {
+    display: none;
+}
+
+/* --- Output Section Styling --- */
+#output-section {
+    margin-top: 2.5rem;
+    padding: 2rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #fcfcfc;
+}
+
+#output-section h2 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+#output-section h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #444;
+    font-size: 1.2rem;
+}
+
+#output-section p {
+    color: #666;
+    line-height: 1.6;
+}
+
+#output-section ul {
+    list-style-position: inside;
+    margin-top: 0.5rem;
+    padding-left: 1rem;
+}
+
+#output-section li {
+    margin-bottom: 0.5rem;
+}
+
+/* Feedback user input area */
+#feedback-section hr {
+    border: none;
+    border-top: 1px solid #e0e0e0;
+    margin: 2rem 0;
+}
+
+#feedback-section textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 1rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+}
+
+#feedback-section textarea:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+
+/* --- Responsive Design for Smaller Screens (e.g., Mobile Phones) --- */
+@media (max-width: 768px) {
+    .app-container {
+        padding: 1.5rem;
+    }
+
+    header h1 {
+        font-size: 2.5rem;
+    }
+
+    /* Stack dropdowns into a single column */
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .button-container {
+        flex-direction: column-reverse; /* Stack buttons vertically */
+        gap: 0.75rem;
+    }
+
+    .btn {
+        width: 100%;
+    }
+}
