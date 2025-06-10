@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitStyle - AI Stylist</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>FitStyle</h1>
+            <p>Your personal guide to the perfect outfit</p>
+        </header>
+        <main>
+            <form id="style-selector-form">
+                <div class="form-grid">
+                    <!-- Dropdown 1: Body Type -->
+                    <div class="form-group">
+                        <label for="body-type">Body Type</label>
+                        <div class="select-wrapper">
+                            <select id="body-type" name="body-type" required>
+                                <option value="" disabled selected>Select your body type...</option>
+                                <option value="Ectomorph (lean and long)">Ectomorph (lean and long)</option>
+                                <option value="Mesomorph (muscular and well-built)">Mesomorph (muscular and well-built)</option>
+                                <option value="Endomorph (big, high body fat)">Endomorph (big, high body fat)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- ===================== DROPDOWN 2: SIMPLIFIED BODY SHAPE ===================== -->
+                    <div class="form-group">
+                        <label for="body-shape">Body Shape</label>
+                        <div class="select-wrapper">
+                            <select id="body-shape" name="body-shape" required>
+                                <option value="" disabled selected>Select your body shape...</option>
+                                <option value="Wider Shoulders">Wider Shoulders (Inverted Triangle)</option>
+                                <option value="Wider Hips">Wider Hips (Pear/Triangle)</option>
+                                <option value="Balanced Shoulders and Hips">Balanced Shoulders & Hips (Hourglass)</option>
+                                <option value="Shoulders and Hips are Same Width">Shoulders & Hips Same Width (Rectangle)</option>
+                                <option value="Fuller Midsection">Fuller Midsection (Apple/Round)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Dropdown 3: Gender -->
+                    <div class="form-group">
+                        <label for="gender">Gender</label>
+                        <div class="select-wrapper">
+                            <select id="gender" name="gender" required>
+                                <option value="" disabled selected>Select your gender...</option>
+                                <option value="Female">Female</option>
+                                <option value="Male">Male</option>
+                                <option value="Unspecified">Prefer not to say</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- ===================== DROPDOWN 4: NEW AGE GROUP ===================== -->
+                    <div class="form-group">
+                        <label for="age-group">Age Group</label>
+                        <div class="select-wrapper">
+                            <select id="age-group" name="age-group" required>
+                                <option value="" disabled selected>Select your age group...</option>
+                                <option value="Teenager (13-19)">Teenager (13-19)</option>
+                                <option value="Young Adult (20-29)">Young Adult (20-29)</option>
+                                <option value="Adult (30-49)">Adult (30-49)</option>
+                                <option value="Mature Adult (50+)">Mature Adult (50+)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Dropdown 5: Skin Tone -->
+                    <div class="form-group">
+                        <label for="skin-tone">Skin Tone</label>
+                        <div class="select-wrapper">
+                            <select id="skin-tone" name="skin-tone" required>
+                                <option value="" disabled selected>Select your skin tone...</option>
+                                <option value="Fair">Fair</option>
+                                <option value="Light">Light</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Olive">Olive</option>
+                                <option value="Tan">Tan</option>
+                                <option value="Brown">Brown</option>
+                                <option value="Dark">Dark</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- ===================== DROPDOWN 6: EXPANDED OCCASION ===================== -->
+                    <div class="form-group">
+                        <label for="occasion">Occasion</label>
+                        <div class="select-wrapper">
+                            <select id="occasion" name="occasion" required>
+                                <option value="" disabled selected>Select an occasion...</option>
+                                <option value="Everyday Casual Wear">Everyday Casual Wear</option>
+                                <option value="Work or Business Meeting">Work or Business Meeting</option>
+                                <option value="College or University">College or University</option>
+                                <option value="Party or Night Out">Party or Night Out</option>
+                                <option value="Wedding or Formal Event">Wedding or Formal Event</option>
+                                <option value="Religious Ceremony">Religious Ceremony</option>
+                                <option value="Holiday or Vacation">Holiday or Vacation</option>
+                                <option value="Sports or Gym Workout">Sports or Gym Workout</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="button-container">
+                    <button type="reset" class="btn btn-reset">Reset</button>
+                    <button type="submit" class="btn btn-submit">Get AI Advice</button>
+                </div>
+            </form>
+
+            <section id="output-section" class="hidden">
+                <div id="result-text"></div>
+            </section>
+        </main>
+    </div>
+    <script src="{{ url_for('static', filename='index.js') }}"></script>
+</body>
+</html>
