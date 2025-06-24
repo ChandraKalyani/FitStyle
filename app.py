@@ -1,81 +1,116 @@
-# app.py
 import os
-import json # 1. We import the 'json' library
-from flask import Flask, request, jsonify, render_template, make_response
+import json
+import threading # We need this to run the AI call in the background
+from flask import Flask, request, jsonify, render_template, make_response, g
 from flask_cors import CORS
-# from dotenv import load_dotenv  <- 2. We no longer need dotenv
 import google.generativeai as genai
-
-# load_dotenv() <- We no longer need this line
 
 app = Flask(__name__)
 CORS(app)
 
-# --- 3. THIS IS THE MAIN PART THAT HAS CHANGED ---
-# We now load the API key from config.json
+# Standard setup
 try:
     with open('config.json') as config_file:
         config = json.load(config_file)
-        # Configure the Generative AI model with the key from the JSON file
         genai.configure(api_key=config["API_KEY"])
-except FileNotFoundError:
-    print("ERROR: config.json file not found. Please create it and add your API_KEY.")
+except (FileNotFoundError, KeyError) as e:
+    print(f"ERROR: Could not load API key from config.json. Details: {e}")
     exit()
-except KeyError:
-    print("ERROR: 'API_KEY' not found in config.json file. Please add it.")
-    exit()
-# ----------------------------------------------------
+
+model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
+
+# A simple in-memory "database" to store the result
+# In a real, large-scale app, you'd use a real database like Redis or a SQL DB.
+results_storage = {}
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/get-recommendation', methods=['POST', 'OPTIONS'])
-def get_recommendation():
-    if request.method == 'OPTIONS':
-        response = make_response()
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
-        response.headers.add("Access-Control-Allow-Methods", "POST")
-        return response
-
+# This is the function that does the slow AI work
+def get_ai_recommendation_in_background(task_id, data):
+    print(f"[{task_id}] Starting AI generation in the background...")
     try:
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "Invalid request: No JSON data received."}), 400
+        outfit_prompt = f"""
+        You are "FitStyle", a friendly fashion guide. A user needs a simple outfit idea.
+        Your language must be very clear, short, and easy for anyone to understand.
 
-        prompt = f"""
-        You are "FitStyle", a friendly and expert fashion advisor.
-        A user needs an outfit recommendation based on the following details:
-        - Body Type: {data.get('bodyType', 'Not specified')}
-        - Body Shape: {data.get('bodyShape', 'Not specified')}
-        - Gender: {data.get('gender', 'Not specified')}
-        - Age Group: {data.get('ageGroup', 'Not specified')}
-        - Skin Tone: {data.get('skinTone', 'Not specified')}
-        - Occasion: {data.get('occasion', 'Not specified')}
+        USER'S DETAILS:
+        - Body Type: {data.get('body-type')}
+        - Body Shape: {data.get('body-shape')}
+        - Gender: {data.get('gender')}
+        - Age Group: {data.get('age-group')}
+        - Skin Tone: {data.get('skin-tone')}
+        - Occasion: {data.get('occasion')}
 
-        Provide a single, stylish outfit. Format your response using markdown with the following structure exactly:
-
-        **The Outfit:**
-        *   **Top:** [Describe the top, e.g., Cream-colored fitted t-shirt]
-        *   **Bottom:** [Describe the bottom, e.g., Dark wash straight-leg jeans]
-        *   **Footwear:** [Describe the footwear, e.g., White sneakers]
-        *   **Accessory/Outerwear:** [Describe an optional accessory or jacket]
-
-        **Why It Works:**
-        *   [Explain the first reason in a single bullet point]
-        *   [Explain the second reason in a single bullet point]
-        *   [Explain the third reason in a single bullet point]
+        **Your Task:** Describe a simple outfit (Top, Bottom, Shoes).
+        Format your response using this exact markdown structure:
+        ### Here's a Simple Outfit Idea:
+        *   **Top:** [Simple description]
+        *   **Bottom:** [Simple description]
+        *   **Shoes:** [Simple description]
         """
+        response = model.generate_content(outfit_prompt)
         
-        model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
-        
-        response = model.generate_content(prompt)
-        return jsonify({'recommendation': response.text})
+        # Store the successful result
+        results_storage[task_id] = {'status': 'completed', 'recommendation': response.text}
+        print(f"[{task_id}] AI generation complete. Result stored.")
 
     except Exception as e:
-        print(f"An error occurred: {e}")
-        return jsonify({'error': 'Failed to get recommendation from AI.'}), 500
+        print(f"[{task_id}] ERROR during AI generation: {e}")
+        # Store the error
+        results_storage[task_id] = {'status': 'failed', 'error': str(e)}
+
+# ===================================================================
+# =================== STEP 1: INSTANT RESPONSE ======================
+# ===================================================================
+@app.route('/start-recommendation', methods=['POST'])
+def start_recommendation():
+    import uuid
+    # Create a unique ID for this request
+    task_id = str(uuid.uuid4())
+    data = request.get_json()
+    
+    # Immediately store a "processing" status
+    results_storage[task_id] = {'status': 'processing'}
+    
+    # Start the slow AI work in a separate background thread
+    # This lets us return a response to the user immediately
+    thread = threading.Thread(target=get_ai_recommendation_in_background, args=(task_id, data))
+    thread.start()
+    
+    print(f"[{task_id}] Task started. Returning task ID to user.")
+    
+    # Immediately return the unique ID to the browser. This is very fast.
+    return jsonify({'task_id': task_id})
+
+# ===================================================================
+# ================= STEP 2: CHECK FOR THE RESULT ====================
+# ===================================================================
+@app.route('/get-result/<task_id>', methods=['GET'])
+def get_result(task_id):
+    result = results_storage.get(task_id, {})
+    
+    # If the task is done, we can remove it from memory
+    if result.get('status') == 'completed' or result.get('status') == 'failed':
+        # Pop the result to clean up memory, but return it first
+        return jsonify(results_storage.pop(task_id, {}))
+        
+    # If it's still processing, just return that status
+    return jsonify(result)
+
+# The /chat endpoint and other functions remain the same
+@app.route('/chat', methods=['POST'])
+def chat():
+    # ... your chat logic ...
+    pass
+
+@app.route('/start-recommendation', methods=['OPTIONS'])
+@app.route('/get-result/<task_id>', methods=['OPTIONS'])
+@app.route('/chat', methods=['OPTIONS'])
+def handle_options(task_id=None):
+    # ... your CORS handling logic ...
+    pass
 
 if __name__ == '__main__':
     app.run(debug=True)
