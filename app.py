@@ -1,7 +1,6 @@
 import os
 import json
-import threading # We need this to run the AI call in the background
-from flask import Flask, request, jsonify, render_template, make_response, g
+from flask import Flask, request, jsonify, render_template, make_response
 from flask_cors import CORS
 import google.generativeai as genai
 
@@ -19,21 +18,21 @@ except (FileNotFoundError, KeyError) as e:
 
 model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
 
-# A simple in-memory "database" to store the result
-# In a real, large-scale app, you'd use a real database like Redis or a SQL DB.
-results_storage = {}
-
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# This is the function that does the slow AI work
-def get_ai_recommendation_in_background(task_id, data):
-    print(f"[{task_id}] Starting AI generation in the background...")
+@app.route('/get-recommendation', methods=['POST'])
+def get_recommendation():
     try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Invalid request"}), 400
+
+        # PROMPT FOR SIMPLE, SHORT TEXT, USING ALL SIX OF YOUR ORIGINAL INPUTS
         outfit_prompt = f"""
-        You are "FitStyle", a friendly fashion guide. A user needs a simple outfit idea.
-        Your language must be very clear, short, and easy for anyone to understand.
+        You are "FitStyle", a friendly fashion guide.
+        A user needs a simple outfit idea. Your language must be very clear, short, and easy for anyone to understand.
 
         USER'S DETAILS:
         - Body Type: {data.get('body-type')}
@@ -43,74 +42,62 @@ def get_ai_recommendation_in_background(task_id, data):
         - Skin Tone: {data.get('skin-tone')}
         - Occasion: {data.get('occasion')}
 
-        **Your Task:** Describe a simple outfit (Top, Bottom, Shoes).
+        **Your Task:**
+        Describe a simple outfit (Top, Bottom, Shoes). Use basic terms.
         Format your response using this exact markdown structure:
+
         ### Here's a Simple Outfit Idea:
-        *   **Top:** [Simple description]
-        *   **Bottom:** [Simple description]
-        *   **Shoes:** [Simple description]
+        *   **Top:** [Very simple description of the top.]
+        *   **Bottom:** [Very simple description of the bottom.]
+        *   **Shoes:** [Very simple description of the shoes.]
+        
+        This look is great because it's comfortable and stylish for your occasion!
         """
         response = model.generate_content(outfit_prompt)
         
-        # Store the successful result
-        results_storage[task_id] = {'status': 'completed', 'recommendation': response.text}
-        print(f"[{task_id}] AI generation complete. Result stored.")
+        # We ONLY return the 'recommendation' text.
+        return jsonify({'recommendation': response.text})
 
     except Exception as e:
-        print(f"[{task_id}] ERROR during AI generation: {e}")
-        # Store the error
-        results_storage[task_id] = {'status': 'failed', 'error': str(e)}
+        print(f"An error occurred in get_recommendation: {e}")
+        return jsonify({'error': 'Failed to get recommendation from AI.'}), 500
 
-# ===================================================================
-# =================== STEP 1: INSTANT RESPONSE ======================
-# ===================================================================
-@app.route('/start-recommendation', methods=['POST'])
-def start_recommendation():
-    import uuid
-    # Create a unique ID for this request
-    task_id = str(uuid.uuid4())
-    data = request.get_json()
-    
-    # Immediately store a "processing" status
-    results_storage[task_id] = {'status': 'processing'}
-    
-    # Start the slow AI work in a separate background thread
-    # This lets us return a response to the user immediately
-    thread = threading.Thread(target=get_ai_recommendation_in_background, args=(task_id, data))
-    thread.start()
-    
-    print(f"[{task_id}] Task started. Returning task ID to user.")
-    
-    # Immediately return the unique ID to the browser. This is very fast.
-    return jsonify({'task_id': task_id})
-
-# ===================================================================
-# ================= STEP 2: CHECK FOR THE RESULT ====================
-# ===================================================================
-@app.route('/get-result/<task_id>', methods=['GET'])
-def get_result(task_id):
-    result = results_storage.get(task_id, {})
-    
-    # If the task is done, we can remove it from memory
-    if result.get('status') == 'completed' or result.get('status') == 'failed':
-        # Pop the result to clean up memory, but return it first
-        return jsonify(results_storage.pop(task_id, {}))
-        
-    # If it's still processing, just return that status
-    return jsonify(result)
-
-# The /chat endpoint and other functions remain the same
+# UPGRADED CHAT ENDPOINT FOR ALTERNATIVES
 @app.route('/chat', methods=['POST'])
 def chat():
-    # ... your chat logic ...
-    pass
+    try:
+        data = request.get_json()
+        history = data['history']
+        new_message = data['newMessage']
+        prompt = f"""
+        You are "FitStyle", a friendly and helpful fashion chatbot. A user is asking for a change or an alternative to their outfit.
+        Your goal is to be helpful and provide a specific, simple alternative.
 
-@app.route('/start-recommendation', methods=['OPTIONS'])
-@app.route('/get-result/<task_id>', methods=['OPTIONS'])
+        **Conversation History (The user's original recommendation):**
+        {history}
+
+        **User's New Request:** "{new_message}"
+
+        **Your Task:**
+        - Analyze the user's request.
+        - Provide a single, simple, and clear alternative. For example, if they ask for a different color, suggest one. If they ask about different shoes, suggest a different type.
+        - Keep your response conversational, short, and encouraging.
+        """
+        response = model.generate_content(prompt)
+        return jsonify({'reply': response.text})
+    except Exception as e:
+        print(f"An error occurred in chat: {e}")
+        return jsonify({'reply': 'I had a little trouble thinking of an alternative. Can you try rephrasing?'})
+
+# Standard CORS handling
+@app.route('/get-recommendation', methods=['OPTIONS'])
 @app.route('/chat', methods=['OPTIONS'])
-def handle_options(task_id=None):
-    # ... your CORS handling logic ...
-    pass
+def handle_options():
+    response = make_response()
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+    response.headers.add("Access-Control-Allow-Methods", "POST")
+    return response
 
 if __name__ == '__main__':
     app.run(debug=True)
