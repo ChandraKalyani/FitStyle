@@ -6,6 +6,7 @@
     <title>FitStyle - AI Stylist</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body>
     <div class="app-container">
@@ -14,31 +15,162 @@
             <p>Your personal guide to the perfect outfit</p>
         </header>
         <main>
-            <!-- Your entire <form> with the standard dropdowns is correct. -->
-            <!-- It should have 6 <div class="form-group"> elements -->
             <form id="style-selector-form">
                 <div class="form-grid">
+
                     <!-- Dropdown 1: Body Type -->
                     <div class="form-group">
                         <label for="body-type">Body Type</label>
-                        <div class="select-wrapper"><select id="body-type" name="body-type" required>...</select></div>
+                        <div class="custom-select-wrapper">
+                            <select id="body-type" name="body-type" required>
+                                <option value="" disabled selected>Select your body type...</option>
+                                <option value="Ectomorph (lean and long)">Ectomorph (lean and long)</option>
+                                <option value="Mesomorph (muscular and well-built)">Mesomorph (muscular and well-built)</option>
+                                <option value="Endomorph (big, high body fat)">Endomorph (big, high body fat)</option>
+                            </select>
+                            <div class="custom-select">
+                                <div class="custom-select-trigger"><span>Select your body type...</span><div class="arrow"></div></div>
+                                <div class="custom-options">
+                                    <div class="custom-option" data-value="Ectomorph (lean and long)"><i data-feather="user"></i>Ectomorph (lean and long)</div>
+                                    <div class="custom-option" data-value="Mesomorph (muscular and well-built)"><i data-feather="bold"></i>Mesomorph (muscular)</div>
+                                    <div class="custom-option" data-value="Endomorph (big, high body fat)"><i data-feather="maximize"></i>Endomorph (big)</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
                     <!-- Dropdown 2: Body Shape -->
                     <div class="form-group">
                         <label for="body-shape">Body Shape</label>
-                        <div class="select-wrapper"><select id="body-shape" name="body-shape" required>...</select></div>
+                        <div class="custom-select-wrapper">
+                            <select id="body-shape" name="body-shape" required>
+                                <option value="" disabled selected>Select your body shape...</option>
+                                <option value="Wider Shoulders">Wider Shoulders</option>
+                                <option value="Wider Hips">Wider Hips</option>
+                                <option value="Balanced Shoulders and Hips">Balanced Shoulders & Hips</option>
+                                <option value="Shoulders and Hips are Same Width">Shoulders & Hips Same Width</option>
+                                <option value="Fuller Midsection">Fuller Midsection</option>
+                            </select>
+                            <div class="custom-select">
+                                <div class="custom-select-trigger"><span>Select your body shape...</span><div class="arrow"></div></div>
+                                <div class="custom-options">
+                                    <div class="custom-option" data-value="Wider Shoulders"><i data-feather="triangle" class="rotated-icon"></i>Wider Shoulders</div>
+                                    <div class="custom-option" data-value="Wider Hips"><i data-feather="triangle"></i>Wider Hips</div>
+                                    <div class="custom-option" data-value="Balanced Shoulders and Hips"><i data-feather="git-merge"></i>Balanced Shoulders & Hips</div>
+                                    <div class="custom-option" data-value="Shoulders and Hips are Same Width"><i data-feather="square"></i>Shoulders & Hips Same Width</div>
+                                    <div class="custom-option" data-value="Fuller Midsection"><i data-feather="circle"></i>Fuller Midsection</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <!-- ... And so on for all 6 dropdowns ... -->
+                    
+                    <!-- Dropdown 3: Gender -->
+                    <div class="form-group">
+                        <label for="gender">Gender</label>
+                         <div class="custom-select-wrapper">
+                            <select id="gender" name="gender" required>
+                                <option value="" disabled selected>Select your gender...</option>
+                                <option value="Female">Female</option>
+                                <option value="Male">Male</option>
+                                <option value="Unspecified">Prefer not to say</option>
+                            </select>
+                            <div class="custom-select">
+                                <div class="custom-select-trigger"><span>Select your gender...</span><div class="arrow"></div></div>
+                                <div class="custom-options">
+                                    <div class="custom-option" data-value="Female"><i data-feather="user"></i>Female</div>
+                                    <div class="custom-option" data-value="Male"><i data-feather="user"></i>Male</div>
+                                    <div class="custom-option" data-value="Unspecified"><i data-feather="user-check"></i>Prefer not to say</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dropdown 4: Age Group -->
+                    <div class="form-group">
+                        <label for="age-group">Age Group</label>
+                        <div class="custom-select-wrapper">
+                             <select id="age-group" name="age-group" required>
+                                <option value="" disabled selected>Select an age group...</option>
+                                <option value="Teenager (13-19)">Teenager (13-19)</option>
+                                <option value="Young Adult (20-29)">Young Adult (20-29)</option>
+                                <option value="Adult (30-49)">Adult (30-49)</option>
+                                <option value="Mature Adult (50+)">Mature Adult (50+)</option>
+                            </select>
+                            <div class="custom-select">
+                                <div class="custom-select-trigger"><span>Select an age group...</span><div class="arrow"></div></div>
+                                <div class="custom-options">
+                                    <div class="custom-option" data-value="Teenager (13-19)"><i data-feather="music"></i>Teenager (13-19)</div>
+                                    <div class="custom-option" data-value="Young Adult (20-29)"><i data-feather="book-open"></i>Young Adult (20-29)</div>
+                                    <div class="custom-option" data-value="Adult (30-49)"><i data-feather="briefcase"></i>Adult (30-49)</div>
+                                    <div class="custom-option" data-value="Mature Adult (50+)"><i data-feather="coffee"></i>Mature Adult (50+)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Dropdown 5: Skin Tone -->
+                    <div class="form-group">
+                        <label for="skin-tone">Skin Tone</label>
+                        <div class="custom-select-wrapper">
+                            <select id="skin-tone" name="skin-tone" required>
+                                <option value="" disabled selected>Select a skin tone...</option>
+                                <option value="Fair">Fair</option>
+                                <option value="Light">Light</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Olive">Olive</option>
+                                <option value="Tan">Tan</option>
+                                <option value="Brown">Brown</option>
+                                <option value="Dark">Dark</option>
+                            </select>
+                            <div class="custom-select">
+                                <div class="custom-select-trigger"><span>Select a skin tone...</span><div class="arrow"></div></div>
+                                <div class="custom-options">
+                                    <div class="custom-option" data-value="Fair"><i data-feather="sun"></i>Fair</div>
+                                    <div class="custom-option" data-value="Light"><i data-feather="sun"></i>Light</div>
+                                    <div class="custom-option" data-value="Medium"><i data-feather="sun"></i>Medium</div>
+                                    <div class="custom-option" data-value="Olive"><i data-feather="sun"></i>Olive</div>
+                                    <div class="custom-option" data-value="Tan"><i data-feather="sun"></i>Tan</div>
+                                    <div class="custom-option" data-value="Brown"><i data-feather="moon"></i>Brown</div>
+                                    <div class="custom-option" data-value="Dark"><i data-feather="moon"></i>Dark</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dropdown 6: Occasion -->
+                    <div class="form-group">
+                        <label for="occasion">Occasion</label>
+                        <div class="custom-select-wrapper">
+                            <select id="occasion" name="occasion" required>
+                                <option value="" disabled selected>Select an occasion...</option>
+                                <option value="Everyday Casual Wear">Everyday Casual</option>
+                                <option value="Work or Business Meeting">Work or Business</option>
+                                <option value="College or University">College or University</option>
+                                <option value="Party or Night Out">Party or Night Out</option>
+                                <option value="Wedding or Formal Event">Wedding or Formal</option>
+                                <option value="Holiday or Vacation">Holiday or Vacation</option>
+                            </select>
+                            <div class="custom-select">
+                                <div class="custom-select-trigger"><span>Select an occasion...</span><div class="arrow"></div></div>
+                                <div class="custom-options">
+                                    <div class="custom-option" data-value="Everyday Casual Wear"><i data-feather="shopping-bag"></i>Everyday Casual</div>
+                                    <div class="custom-option" data-value="Work or Business Meeting"><i data-feather="briefcase"></i>Work or Business</div>
+                                    <div class="custom-option" data-value="College or University"><i data-feather="book"></i>College or University</div>
+                                    <div class="custom-option" data-value="Party or Night Out"><i data-feather="gift"></i>Party or Night Out</div>
+                                    <div class="custom-option" data-value="Wedding or Formal Event"><i data-feather="heart"></i>Wedding or Formal</div>
+                                    <div class="custom-option" data-value="Holiday or Vacation"><i data-feather="send"></i>Holiday or Vacation</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
                 <div class="button-container">
                     <button type="reset" class="btn btn-reset">Reset</button>
                     <button type="submit" class="btn btn-submit">Get AI Advice</button>
                 </div>
             </form>
 
-            <!-- ========================================================== -->
-            <!-- ===== THIS IS THE CORRECTED OUTPUT SECTION STRUCTURE ===== -->
-            <!-- ========================================================== -->
             <section id="output-section" class="hidden">
                 <div id="result-text-container">
                      <h3>Your Outfit Recommendation</h3>
@@ -56,6 +188,10 @@
             </section>
         </main>
     </div>
+    
+    <script>
+        feather.replace();
+    </script>
     <script src="{{ url_for('static', filename='index.js') }}"></script>
 </body>
 </html>
