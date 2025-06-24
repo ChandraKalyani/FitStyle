@@ -1,94 +1,176 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Keep the custom dropdown script at the top, it's correct.
-    // ...
 
-    // MAIN APPLICATION LOGIC
+    // SCRIPT FOR CUSTOM DROPDOWNS (This part is correct and stays)
+    document.querySelectorAll('.custom-select-wrapper').forEach(wrapper => {
+        const trigger = wrapper.querySelector('.custom-select-trigger');
+        const customOptions = wrapper.querySelector('.custom-options');
+        const realSelect = wrapper.querySelector('select');
+        const triggerSpan = trigger.querySelector('span');
+
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.querySelectorAll('.custom-select.open').forEach(openSelect => {
+                if (openSelect !== wrapper.querySelector('.custom-select')) {
+                    openSelect.classList.remove('open');
+                }
+            });
+            wrapper.querySelector('.custom-select').classList.toggle('open');
+        });
+
+        customOptions.querySelectorAll('.custom-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const currentlySelected = customOptions.querySelector('.selected');
+                if (currentlySelected) currentlySelected.classList.remove('selected');
+                option.classList.add('selected');
+                triggerSpan.textContent = option.textContent.trim();
+                triggerSpan.classList.remove('placeholder');
+                realSelect.value = option.getAttribute('data-value');
+                realSelect.dispatchEvent(new Event('change'));
+                wrapper.querySelector('.custom-select').classList.remove('open');
+            });
+        });
+        
+        const syncWithRealSelect = () => {
+            const selectedValue = realSelect.value;
+            const selectedOptionEl = customOptions.querySelector(`.custom-option[data-value="${selectedValue}"]`);
+            customOptions.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
+            if (selectedOptionEl) {
+                triggerSpan.textContent = selectedOptionEl.textContent.trim();
+                triggerSpan.classList.remove('placeholder');
+                selectedOptionEl.classList.add('selected');
+            } else {
+                const placeholder = realSelect.querySelector('option[disabled]').textContent;
+                triggerSpan.textContent = placeholder;
+                triggerSpan.classList.add('placeholder');
+            }
+        };
+        realSelect.addEventListener('change', syncWithRealSelect);
+        syncWithRealSelect();
+    });
+
+    window.addEventListener('click', () => {
+        document.querySelectorAll('.custom-select.open').forEach(openSelect => {
+            openSelect.classList.remove('open');
+        });
+    });
+
+
+    // ===================================================================
+    // ========= SIMPLIFIED AND CORRECTED APPLICATION LOGIC =============
+    // ===================================================================
     const form = document.getElementById('style-selector-form');
     const outputSection = document.getElementById('output-section');
     const resultText = document.getElementById('result-text');
     const chatContainer = document.getElementById('chat-container');
-    // ... other element selections ...
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
+    const chatHistoryContainer = document.getElementById('chat-history');
 
-    // Keep the profile saving/loading functions.
-    // ...
+    let conversationHistory = "";
+    
+    // Check if the form element exists before adding a listener
+    if (form) {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            console.log("Form submitted. Starting process..."); // Debugging line
 
-    // ===================================================================
-    // =========== NEW TWO-STEP FORM SUBMISSION LOGIC ====================
-    // ===================================================================
-    form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const data = Object.fromEntries(new FormData(form).entries());
+            const data = Object.fromEntries(new FormData(form).entries());
 
-        outputSection.classList.remove('hidden');
-        chatContainer.classList.add('hidden');
-        
-        resultText.innerHTML = `<h3>Finding the perfect outfit...</h3><p>This can take up to a minute when the server is waking up. Thanks for your patience!</p>`;
-
-        try {
-            // STEP 1: Start the job and get a task ID instantly
-            const startResponse = await fetch('http://localhost:5000/start-recommendation', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
-            });
+            outputSection.classList.remove('hidden');
+            chatContainer.classList.add('hidden');
             
-            if (!startResponse.ok) throw new Error('Could not start the recommendation process.');
+            resultText.innerHTML = `<div class="skeleton-text"></div><div class="skeleton-text"></div>`;
 
-            const { task_id } = await startResponse.json();
-
-            // STEP 2: Check for the result every 3 seconds
-            checkForResult(task_id);
-
-        } catch (error) {
-            console.error('Error starting process:', error);
-            resultText.innerHTML = `<h2>Oops!</h2><p>Could not contact the server to start the process. Please try again.</p>`;
-        }
-    });
-
-    // Function to poll for the result
-    function checkForResult(taskId, retries = 20) {
-        if (retries <= 0) {
-            resultText.innerHTML = `<h2>Oops!</h2><p>The request timed out. The server might be very busy. Please try again in a minute.</p>`;
-            return;
-        }
-
-        setTimeout(async () => {
             try {
-                const resultResponse = await fetch(`http://localhost:5000/get-result/${taskId}`);
-                const data = await resultResponse.json();
+                // We use the original, direct endpoint
+                const response = await fetch('https://fitstyle.onrender.com/get-recommendation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                });
+                
+                console.log("Response received from server:", response.status); // Debugging line
 
-                if (data.status === 'processing') {
-                    // It's not ready yet, check again
-                    checkForResult(taskId, retries - 1);
-                } else if (data.status === 'completed') {
-                    // SUCCESS! Display the result.
-                    let htmlResponse = data.recommendation
-                        .replace(/### (.*)/g, '<h3>$1</h3>')
-                        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-                        .replace(/\n\* /g, '<li>');
-                    
-                    if (htmlResponse.includes('<li>')) {
-                        htmlResponse = '<ul>' + htmlResponse.replace(/<li>/g, '</li><li>').substring(5) + '</li></ul>';
-                    }
-                    resultText.innerHTML = htmlResponse;
-                    
-                    // Setup and show chat
-                    conversationHistory = `The AI's first idea was:\n${data.recommendation}`;
-                    chatHistoryContainer.innerHTML = '';
-                    chatContainer.classList.remove('hidden');
-                } else if (data.status === 'failed') {
-                    // The background task failed
-                    console.error('Background task failed:', data.error);
-                    resultText.innerHTML = `<h2>Oops!</h2><p>The AI had a problem creating an outfit. Please try again.</p>`;
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
                 }
+                const resultData = await response.json();
+
+                if (resultData.error) {
+                    throw new Error(resultData.error);
+                }
+
+                console.log("Recommendation data:", resultData.recommendation); // Debugging line
+
+                let htmlResponse = resultData.recommendation
+                    .replace(/### (.*)/g, '<h3>$1</h3>')
+                    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n\* /g, '<li>');
+                
+                if (htmlResponse.includes('<li>')) {
+                    htmlResponse = '<ul>' + htmlResponse.replace(/<li>/g, '</li><li>').substring(5) + '</li></ul>';
+                    htmlResponse = htmlResponse.replace(/<\/ul><li>/g, '<li>');
+                }
+
+                resultText.innerHTML = htmlResponse;
+                
+                conversationHistory = `The AI's first idea was:\n${resultData.recommendation}`;
+                chatHistoryContainer.innerHTML = '';
+                chatContainer.classList.remove('hidden');
+
             } catch (error) {
-                console.error('Error fetching result:', error);
-                // Maybe the network failed, try again
-                checkForResult(taskId, retries - 1);
+                console.error('An error occurred:', error); // Debugging line
+                resultText.innerHTML = `<h2>Oops! Something Went Wrong</h2><p>We couldn't get a recommendation. The server might be busy or waking up. Please try again in a minute.</p><p><small>Error: ${error.message}</small></p>`;
             }
-        }, 3000); // Check every 3 seconds
+        });
+    } else {
+        console.error("The form with id 'style-selector-form' was not found!");
     }
 
-    // Your chat logic and other functions do not need to change.
-    // ...
+    // Chat logic (This is correct and does not need to change)
+    if (chatForm) {
+        chatForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const userMessage = chatInput.value.trim();
+            if (!userMessage) return;
+            appendMessage(userMessage, 'user-message');
+            chatInput.value = '';
+            conversationHistory += `\n\nUser: ${userMessage}`;
+            try {
+                const response = await fetch('https://fitstyle.onrender.com/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ history: conversationHistory, newMessage: userMessage }),
+                });
+                if (!response.ok) throw new Error('Chat server error.');
+                const data = await response.json();
+                appendMessage(data.reply, 'ai-message');
+                conversationHistory += `\n\nAI: ${data.reply}`;
+            } catch (error) {
+                console.error('Chat Error:', error);
+                appendMessage('Sorry, I had a little trouble with that.', 'ai-message');
+            }
+        });
+    }
+    
+    function appendMessage(text, className) {
+        const messageElement = document.createElement('div');
+        messageElement.className = `chat-message ${className}`;
+        messageElement.innerHTML = text.replace(/\n/g, '<br>').replace(/\* /g, '<br>• ');
+        chatHistoryContainer.appendChild(messageElement);
+        chatHistoryContainer.scrollTop = chatHistoryContainer.scrollHeight;
+    }
+
+    // Reset logic (This is correct)
+    if(form) {
+        form.addEventListener('reset', () => {
+            document.querySelectorAll('select').forEach(select => {
+                select.value = "";
+                select.dispatchEvent(new Event('change'));
+            });
+            outputSection.classList.add('hidden');
+            chatContainer.classList.add('hidden');
+            conversationHistory = "";
+        });
+    }
 });
