@@ -1,11 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-
-    // The custom dropdown code at the top is correct. Do not change it.
-    // ...
-
-    // ===================================================================
-    // ========= SIMPLIFIED AND CORRECTED APPLICATION LOGIC =============
-    // ===================================================================
+    // Select all the elements we need from the page
     const form = document.getElementById('style-selector-form');
     const outputSection = document.getElementById('output-section');
     const resultText = document.getElementById('result-text');
@@ -16,45 +10,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let conversationHistory = "";
 
-    // We must check if the form element actually exists on the page
+    // Make sure the form exists before we do anything
     if (form) {
         form.addEventListener('submit', async (event) => {
-            // Prevent the default browser action of reloading the page
-            event.preventDefault(); 
+            event.preventDefault(); // Stop the page from reloading
             
-            console.log("Submit button clicked. Form event listener is working.");
-
             const data = Object.fromEntries(new FormData(form).entries());
 
-            // Show loading state
+            // Show the output section and a loading message
             outputSection.classList.remove('hidden');
             chatContainer.classList.add('hidden');
-            resultText.innerHTML = `<h3>Finding an outfit...</h3><p>This can take a moment, especially if the server is waking up.</p>`;
+            resultText.innerHTML = `<p>Finding the perfect outfit for you...</p>`;
 
             try {
-                // IMPORTANT: We use the full, correct URL for the deployed server
+                // Send the user's choices to our server on Render
                 const response = await fetch('https://fitstyle.onrender.com/get-recommendation', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data),
                 });
-                
-                console.log("Fetch response received, status:", response.status);
 
                 if (!response.ok) {
-                    // Try to get more error details from the server's response
-                    const errorBody = await response.text();
-                    throw new Error(`Server responded with an error. Status: ${response.status}. Body: ${errorBody}`);
+                    throw new Error(`The server responded with an error (Status: ${response.status}). Please try again.`);
                 }
 
                 const resultData = await response.json();
-
+                
                 if (resultData.error) {
                     throw new Error(resultData.error);
                 }
 
+                // Format the AI's response into clean HTML
                 let htmlResponse = resultData.recommendation
                     .replace(/### (.*)/g, '<h3>$1</h3>')
                     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
@@ -65,21 +51,57 @@ document.addEventListener('DOMContentLoaded', () => {
                     htmlResponse = htmlResponse.replace(/<\/ul><li>/g, '<li>');
                 }
 
+                // Display the final result
                 resultText.innerHTML = htmlResponse;
                 
+                // Prepare the chat for follow-up questions
                 conversationHistory = `The AI's first idea was:\n${resultData.recommendation}`;
-                chatHistoryContainer.innerHTML = '';
-                chatContainer.classList.remove('hidden');
+                chatHistoryContainer.innerHTML = ''; // Clear any old chat messages
+                chatContainer.classList.remove('hidden'); // Show the chat box
 
             } catch (error) {
-                console.error('A critical error occurred:', error);
-                resultText.innerHTML = `<h2>Oops! Something Went Wrong</h2><p>We couldn't get a recommendation. The server might be busy or there might be a network issue.</p><p><small>Error details: ${error.message}</small></p>`;
+                console.error('An error occurred:', error);
+                resultText.innerHTML = `<h2>Oops! Something Went Wrong</h2><p>${error.message}</p>`;
             }
         });
-    } else {
-        console.error("CRITICAL ERROR: The form with id 'style-selector-form' was not found in the HTML.");
     }
 
-    // The rest of the file (chat logic, helpers, etc.) can remain the same.
-    // ...
+    // Chat functionality (This part is correct)
+    if (chatForm) {
+        chatForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const userMessage = chatInput.value.trim();
+            if (!userMessage) return;
+            appendMessage(userMessage, 'user-message');
+            chatInput.value = '';
+            conversationHistory += `\n\nUser: ${userMessage}`;
+            try {
+                const response = await fetch('https://fitstyle.onrender.com/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ history: conversationHistory, newMessage: userMessage }),
+                });
+                const data = await response.json();
+                appendMessage(data.reply, 'ai-message');
+                conversationHistory += `\n\nAI: ${data.reply}`;
+            } catch (error) {
+                appendMessage('Sorry, I had a little trouble with that.', 'ai-message');
+            }
+        });
+    }
+    
+    function appendMessage(text, className) {
+        const messageElement = document.createElement('div');
+        messageElement.className = `chat-message ${className}`;
+        messageElement.innerHTML = text.replace(/\n/g, '<br>').replace(/\* /g, '<br>• ');
+        chatHistoryContainer.appendChild(messageElement);
+        chatHistoryContainer.scrollTop = chatHistoryContainer.scrollHeight;
+    }
+
+    // Reset button functionality
+    if (form) {
+        form.addEventListener('reset', () => {
+            outputSection.classList.add('hidden');
+        });
+    }
 });
