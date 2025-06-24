@@ -1,5 +1,67 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Select all the elements we need from the page
+
+    // SCRIPT FOR CUSTOM DROPDOWNS
+    document.querySelectorAll('.custom-select-wrapper').forEach(wrapper => {
+        const trigger = wrapper.querySelector('.custom-select-trigger');
+        const customOptions = wrapper.querySelector('.custom-options');
+        const realSelect = wrapper.querySelector('select');
+        const triggerSpan = trigger.querySelector('span');
+
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.querySelectorAll('.custom-select.open').forEach(openSelect => {
+                if (openSelect !== wrapper.querySelector('.custom-select')) {
+                    openSelect.classList.remove('open');
+                }
+            });
+            wrapper.querySelector('.custom-select').classList.toggle('open');
+        });
+
+        if (customOptions) {
+            customOptions.querySelectorAll('.custom-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    const currentlySelected = customOptions.querySelector('.selected');
+                    if (currentlySelected) currentlySelected.classList.remove('selected');
+                    option.classList.add('selected');
+                    triggerSpan.textContent = option.textContent.trim();
+                    triggerSpan.classList.remove('placeholder');
+                    realSelect.value = option.getAttribute('data-value');
+                    realSelect.dispatchEvent(new Event('change'));
+                    wrapper.querySelector('.custom-select').classList.remove('open');
+                });
+            });
+        }
+        
+        const syncWithRealSelect = () => {
+            const selectedValue = realSelect.value;
+            if (customOptions) {
+                const selectedOptionEl = customOptions.querySelector(`.custom-option[data-value="${selectedValue}"]`);
+                customOptions.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
+                if (selectedOptionEl) {
+                    triggerSpan.textContent = selectedOptionEl.textContent.trim();
+                    triggerSpan.classList.remove('placeholder');
+                    selectedOptionEl.classList.add('selected');
+                } else {
+                    if (realSelect.options.length > 0) {
+                        const placeholder = realSelect.options[0].textContent;
+                        triggerSpan.textContent = placeholder;
+                        triggerSpan.classList.add('placeholder');
+                    }
+                }
+            }
+        };
+        realSelect.addEventListener('change', syncWithRealSelect);
+        syncWithRealSelect();
+    });
+
+    window.addEventListener('click', () => {
+        document.querySelectorAll('.custom-select.open').forEach(openSelect => {
+            openSelect.classList.remove('open');
+        });
+    });
+
+
+    // MAIN APPLICATION LOGIC
     const form = document.getElementById('style-selector-form');
     const outputSection = document.getElementById('output-section');
     const resultText = document.getElementById('result-text');
@@ -9,21 +71,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatHistoryContainer = document.getElementById('chat-history');
 
     let conversationHistory = "";
-
-    // Make sure the form exists before we do anything
+    
     if (form) {
         form.addEventListener('submit', async (event) => {
-            event.preventDefault(); // Stop the page from reloading
+            event.preventDefault();
             
             const data = Object.fromEntries(new FormData(form).entries());
 
-            // Show the output section and a loading message
             outputSection.classList.remove('hidden');
             chatContainer.classList.add('hidden');
-            resultText.innerHTML = `<p>Finding the perfect outfit for you...</p>`;
+            resultText.innerHTML = `<div class="skeleton-text"></div><div class="skeleton-text"></div><div class="skeleton-text"></div>`;
 
             try {
-                // Send the user's choices to our server on Render
                 const response = await fetch('https://fitstyle.onrender.com/get-recommendation', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -40,7 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error(resultData.error);
                 }
 
-                // Format the AI's response into clean HTML
                 let htmlResponse = resultData.recommendation
                     .replace(/### (.*)/g, '<h3>$1</h3>')
                     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
@@ -51,13 +109,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     htmlResponse = htmlResponse.replace(/<\/ul><li>/g, '<li>');
                 }
 
-                // Display the final result
                 resultText.innerHTML = htmlResponse;
                 
-                // Prepare the chat for follow-up questions
                 conversationHistory = `The AI's first idea was:\n${resultData.recommendation}`;
-                chatHistoryContainer.innerHTML = ''; // Clear any old chat messages
-                chatContainer.classList.remove('hidden'); // Show the chat box
+                chatHistoryContainer.innerHTML = '';
+                chatContainer.classList.remove('hidden');
 
             } catch (error) {
                 console.error('An error occurred:', error);
@@ -66,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Chat functionality (This part is correct)
+    // Chat functionality
     if (chatForm) {
         chatForm.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -101,6 +157,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Reset button functionality
     if (form) {
         form.addEventListener('reset', () => {
+            document.querySelectorAll('select').forEach(select => {
+                select.value = "";
+                select.dispatchEvent(new Event('change'));
+            });
             outputSection.classList.add('hidden');
         });
     }
